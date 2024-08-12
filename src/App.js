@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 
 const TimeManagementPlanner = () => {
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState({ name: '', duration: '', start: '', ampm: 'AM' });
+  const [newTask, setNewTask] = useState({ name: '', duration: '', start: '' });
   const [remainingMinutes, setRemainingMinutes] = useState(1440);
   const [currentTime, setCurrentTime] = useState('');
   const [totalMinutesLeft, setTotalMinutesLeft] = useState(1440);
@@ -29,10 +29,9 @@ const TimeManagementPlanner = () => {
   const formatTime = (date) => {
     let hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
     hours = hours ? hours : 12;
-    return `${hours}:${minutes} ${ampm}`;
+    return `${hours}:${minutes}`;
   };
 
   const handleAddTask = () => {
@@ -40,14 +39,12 @@ const TimeManagementPlanner = () => {
       const duration = parseInt(newTask.duration);
       const [hours, minutes] = newTask.start.split(':');
       let startHours = parseInt(hours);
-      if (newTask.ampm === 'PM' && startHours !== 12) startHours += 12;
-      if (newTask.ampm === 'AM' && startHours === 12) startHours = 0;
       const startTime = new Date(2000, 0, 1, startHours, parseInt(minutes));
       const endTime = new Date(startTime.getTime() + duration * 60000);
       const end = formatTime(endTime);
       
       setTasks([...tasks, { ...newTask, duration, end, start: formatTime(startTime) }]);
-      setNewTask({ name: '', duration: '', start: '', ampm: 'AM' });
+      setNewTask({ name: '', duration: '', start: '' });
     }
   };
 
@@ -91,13 +88,6 @@ const TimeManagementPlanner = () => {
           value={newTask.start}
           onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}
         />
-        <select
-          value={newTask.ampm}
-          onChange={(e) => setNewTask({ ...newTask, ampm: e.target.value })}
-        >
-          <option value="AM">AM</option>
-          <option value="PM">PM</option>
-        </select>
         <button onClick={handleAddTask}>Add Task</button>
       </div>
       <div>
