@@ -64,7 +64,7 @@ const TimeManagementPlanner = () => {
 
   return (
     <div>
-      <h1>1440Time Management Planner</h1>
+      <h1>1440 Power System</h1>
       <div>
         <p>1440TIME: {totalMinutesLeft} minutes</p>
         <p>On-Time: {remainingMinutes} minutes</p>
