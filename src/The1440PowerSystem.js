@@ -104,6 +104,7 @@ const The1440PowerSystem = () => {
         </div>
         <div className="w-full md:w-1/2">
           <h2 className="text-xl font-semibold mb-2">Time Distribution:</h2>
+          <p className="text-red-500 font-bold">Debug: Pie chart should appear below</p>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
