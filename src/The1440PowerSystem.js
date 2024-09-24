@@ -1,139 +1,139 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const The1440PowerSystem = () => {
+function The1440PowerSystem() {
+  const [sleep, setSleep] = useState('');
+  const [livelihood, setLivelihood] = useState('');
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState({ name: '', duration: '', start: '' });
+  const [newTaskName, setNewTaskName] = useState('');
+  const [newTaskDuration, setNewTaskDuration] = useState('');
   const [remainingMinutes, setRemainingMinutes] = useState(1440);
-  const [currentTime, setCurrentTime] = useState('');
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#FF6663', '#E0FF4F', '#6B5B95', '#88B04B'];
-  const ON_TIME_COLOR = '#4CAF50'; // Green color for On-Time in pie chart
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    }, 1000);
+      const now = new Date();
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      const diff = Math.floor((endOfDay.getTime() - now.getTime()) / 60000);
+      setRemainingMinutes(diff);
+    }, 60000);
+
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const totalTaskMinutes = tasks.reduce((sum, task) => sum + parseInt(task.duration), 0);
-    setRemainingMinutes(1440 - totalTaskMinutes);
-  }, [tasks]);
+  const updateTime = (zone, value) => {
+    if (zone === 'sleep') setSleep(value);
+    if (zone === 'livelihood') setLivelihood(value);
+  };
 
-  const handleAddTask = () => {
-    if (newTask.name && newTask.duration && newTask.start) {
-      const duration = parseInt(newTask.duration);
-      const startTime = new Date(`2000-01-01 ${newTask.start}`);
-      const endTime = new Date(startTime.getTime() + duration * 60000);
-      const end = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      setTasks([...tasks, { ...newTask, duration, end }]);
-      setNewTask({ name: '', duration: '', start: '' });
+  const calculateOnTime = () => {
+    const sleepTime = sleep ? parseInt(sleep) : 0;
+    const livelihoodTime = livelihood ? parseInt(livelihood) : 0;
+    return Math.max(0, 1440 - sleepTime - livelihoodTime);
+  };
+
+  const addTask = () => {
+    if (newTaskName && newTaskDuration) {
+      const duration = parseInt(newTaskDuration);
+      const totalTaskDuration = tasks.reduce((sum, task) => sum + task.duration, 0) + duration;
+      if (totalTaskDuration <= calculateOnTime()) {
+        setTasks([...tasks, { id: Date.now(), name: newTaskName, duration }]);
+        setNewTaskName('');
+        setNewTaskDuration('');
+      } else {
+        alert("Total task duration exceeds On-Time allocation!");
+      }
     }
   };
 
-  const handleRemoveTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+  const removeTask = (id) => {
+    setTasks(tasks.filter(task => task.id !== id));
   };
 
-  const getChartData = () => {
-    const taskData = tasks.map(task => ({
-      name: task.name,
-      value: parseInt(task.duration)
-    }));
-    
-    taskData.push({ name: 'On-Time', value: remainingMinutes });
-    
-    return taskData;
-  };
+  const totalTaskDuration = tasks.reduce((sum, task) => sum + task.duration, 0);
+  const onTime = calculateOnTime();
+  const remainingOnTime = onTime - totalTaskDuration;
 
-  // Added console.log here
-  console.log(getChartData());
+  const chartData = [
+    { name: 'Sleep', value: sleep ? parseInt(sleep) : 0, color: '#FF6384' },
+    { name: 'Livelihood', value: livelihood ? parseInt(livelihood) : 0, color: '#36A2EB' },
+    { name: 'On-Time (Allocated)', value: totalTaskDuration, color: '#FFCE56' },
+    { name: 'On-Time (Remaining)', value: remainingOnTime, color: '#4BC0C0' }
+  ];
+
+  const totalAllocated = chartData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">The 1440 Power System</h1>
-      <div className="mb-4">
-        <p className="text-xl font-semibold">{remainingMinutes} Minutes Remaining</p>
-        <p className="text-xl font-semibold" style={{ color: '#FF0000' }}>On-Time: {remainingMinutes} minutes</p>
-        <p>Current Time: {currentTime}</p>
+    <div className="The1440PowerSystem">
+      <h1>1440 Power System #1</h1>
+      <div>
+        <label>Sleep (minutes):
+          <input type="number" value={sleep} onChange={(e) => updateTime('sleep', e.target.value)} />
+        </label>
       </div>
-      <div className="flex flex-wrap mb-4">
-        <input
-          type="text"
-          placeholder="Task Name"
-          className="border p-2 m-1"
-          value={newTask.name}
-          onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Duration (minutes)"
-          className="border p-2 m-1"
-          value={newTask.duration}
-          onChange={(e) => setNewTask({ ...newTask, duration: e.target.value })}
-        />
-        <input
-          type="time"
-          className="border p-2 m-1"
-          value={newTask.start}
-          onChange={(e) => setNewTask({ ...newTask, start: e.target.value })}
-        />
-        <button onClick={handleAddTask} className="bg-blue-500 text-white p-2 m-1 rounded">
-          Add Task
-        </button>
+      <div>
+        <label>Livelihood (minutes):
+          <input type="number" value={livelihood} onChange={(e) => updateTime('livelihood', e.target.value)} />
+        </label>
       </div>
-      <div className="flex flex-wrap">
-        <div className="w-full md:w-1/2 pr-4">
-          <h2 className="text-xl font-semibold mb-2">Task List:</h2>
-          <ul className="mb-4">
-            {tasks.map((task, index) => (
-              <li key={index} className="mb-2 flex justify-between items-center">
-                <span>
-                  {task.name} ({task.duration} minutes) - Start: {task.start}, End: {task.end}
-                </span>
-                <button onClick={() => handleRemoveTask(index)} className="bg-red-500 text-white p-1 text-sm rounded">
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="w-full md:w-1/2">
-          <h2 className="text-xl font-semibold mb-2">Time Distribution:</h2>
-          <p className="text-red-500 font-bold">Debug: Pie chart should appear below</p>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={getChartData()}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  label
-                >
-                  {getChartData().map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`}
-                      fill={entry.name === 'On-Time' ? ON_TIME_COLOR : COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+      <div>
+        <label>On-Time (minutes): {onTime}</label>
+      </div>
+      <div>
+        <p>Total allocated time: {totalAllocated} minutes</p>
+        <p>Remaining unallocated time: {1440 - totalAllocated} minutes</p>
+      </div>
+      <div style={{ width: '100%', height: 300 }}>
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, value }) => `${name}: ${value}`}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div>
+        <h3>On-Time Tasks</h3>
+        {tasks.map(task => (
+          <div key={task.id}>
+            <span>{task.name} - {task.duration} min</span>
+            <button onClick={() => removeTask(task.id)}>Remove</button>
           </div>
+        ))}
+        <div>
+          <input
+            type="text"
+            placeholder="Task name"
+            value={newTaskName}
+            onChange={(e) => setNewTaskName(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Duration"
+            value={newTaskDuration}
+            onChange={(e) => setNewTaskDuration(e.target.value)}
+          />
+          <button onClick={addTask}>Add Task</button>
         </div>
+        <p>Remaining On-Time: {remainingOnTime} minutes</p>
       </div>
+      <div>
+        <p>Minutes remaining today: {remainingMinutes}</p>
+      </div>
+      <p>Own your minutes, own your life</p>
     </div>
   );
-};
+}
 
 export default The1440PowerSystem;
